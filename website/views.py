@@ -1,15 +1,16 @@
 from django.shortcuts import render,redirect
 from django.contrib.auth import login,logout,authenticate
 from django.contrib import messages
-from .forms import signUpForm
-
+from .forms import signUpForm, AddRecordForm
+from .models import customerRecord
 # Create your views here.
 
 def home(request):
+    custRecords = customerRecord.objects.all()
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
-         # Authenticate the user with the provided username and password
+        # Authenticate the user with the provided username and password
         user = authenticate(username=username, password=password)
        # print(username)
        # print(password)
@@ -24,7 +25,7 @@ def home(request):
             messages.success(request, "Successfully Logged In")
             return redirect('home')
     else:        
-        return render(request, 'home.html', {})
+        return render(request, 'home.html', {'custRecords':custRecords})
 
 
 def logoutUser(request):
@@ -50,3 +51,35 @@ def registertUser(request):
         return render(request, 'register.html', {'form': form})
         
     return render(request, 'register.html', {'form': form})
+
+def userRecords(request, pk):
+    if request.user.is_authenticated:
+        record = customerRecord.objects.get(id=pk)
+        return render(request, 'customerRecord.html', {'record': record})
+    else:
+        messages.success(request, "You have to Login to View this Page")
+        return redirect('home')   
+
+def deleteRecord(request, pk):   
+    if request.user.is_authenticated:
+        record = customerRecord.objects.get(id=pk)
+        record.delete()
+        messages.success(request, "Record Deleted Successfully")
+        return redirect('home')
+    else:
+        messages.success(request, "You have to Login to Perform this Action")
+        return redirect('home')   
+    
+def addRecord(request):
+    userForm = AddRecordForm(request.POST or None)
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            if userForm.is_valid():
+                userForm.save()
+                messages.success(request, "Record Added Successfully")
+                return redirect('home')
+            
+        return render(request, 'addRecord.html', {'userForm': userForm})
+    else:
+        messages.success(request, "You have to Login to Perform this Action")
+        return redirect('home')   
