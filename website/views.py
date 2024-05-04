@@ -83,3 +83,17 @@ def addRecord(request):
     else:
         messages.success(request, "You have to Login to Perform this Action")
         return redirect('home')   
+    
+def updateRecord(request, pk):
+    if request.user.is_authenticated:
+        record = customerRecord.objects.get(id=pk)
+        print(record)
+        userForm = AddRecordForm(request.POST or None, instance= record) #Instance is used to fill the form with Customer data we need to update
+        if userForm.is_valid():
+            userForm.save()
+            messages.success(request, "Record Updated Successfully")
+            return redirect('home')
+        return render(request, 'updateRecord.html', {'userForm': userForm})
+    else:
+        messages.success(request, "You have to Login to Perform this Action")
+        return redirect('home')
